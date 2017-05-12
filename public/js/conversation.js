@@ -162,6 +162,7 @@ var ConversationPanel = (function() {
     var messageArray = [];
 
     textArray.forEach(function(currentText) {
+      console.log("DIALOG MSG: >> ", currentText);
       if (currentText) {
         var messageJson = {
           // <div class='segments'>

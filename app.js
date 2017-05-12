@@ -19,6 +19,10 @@
 var express = require('express'); // app server
 var bodyParser = require('body-parser'); // parser for post requests
 var Conversation = require('watson-developer-cloud/conversation/v1'); // watson sdk
+var request = require('request');
+var format = require('util').format;
+var feedsHandler = require('./handlers/feedsHandler')();
+var searchHandler = require('./handlers/searchHandler')();
 
 var app = express();
 
@@ -38,7 +42,7 @@ var conversation = new Conversation({
 });
 
 // Endpoint to be call from the client side
-app.post('/api/message', function(req, res) {
+app.post('/api/message', function(req, res, next) {
   var workspace = process.env.WORKSPACE_ID || '<workspace-id>';
   if (!workspace || workspace === '<workspace-id>') {
     return res.json({
@@ -47,18 +51,23 @@ app.post('/api/message', function(req, res) {
       }
     });
   }
+
   var payload = {
     workspace_id: workspace,
     context: req.body.context || {},
     input: req.body.input || {}
   };
 
+  payload.context.next_action = "";
+
   // Send the input to the conversation service
   conversation.message(payload, function(err, data) {
     if (err) {
       return res.status(err.code || 500).json(err);
     }
-    return res.json(updateMessage(payload, data));
+    updateMessage(data, function(err, resp){
+        return res.json(resp);
+    });
   });
 });
 
@@ -68,13 +77,13 @@ app.post('/api/message', function(req, res) {
  * @param  {Object} response The response from the Conversation service
  * @return {Object}          The response with the updated message
  */
-function updateMessage(input, response) {
+function updateMessage(response, cb) {
+  console.log(response);
   var responseText = null;
   if (!response.output) {
     response.output = {};
-  } else {
-    return response;
   }
+
   if (response.intents && response.intents[0]) {
     var intent = response.intents[0];
     // Depending on the confidence of the response the app can return different messages.
@@ -82,16 +91,111 @@ function updateMessage(input, response) {
     // a class/intent to the input. If the confidence is low, then it suggests the service is unsure of the
     // user's intent . In these cases it is usually best to return a disambiguation message
     // ('I did not understand your intent, please rephrase your question', etc..)
-    if (intent.confidence >= 0.75) {
-      responseText = 'I understood your intent was ' + intent.intent;
-    } else if (intent.confidence >= 0.5) {
-      responseText = 'I think your intent was ' + intent.intent;
-    } else {
+    if (intent.confidence <= 0.5) {
       responseText = 'I did not understand your intent';
     }
   }
-  response.output.text = responseText;
-  return response;
+
+  if(response.context && response.context.next_action){
+      var next_action = response.context.next_action;
+      console.log("NEXT ACTION: >>> ", next_action);
+      if(next_action == 'google_search'){
+          searchGoogle(response, function(err, resp){
+              return cb(null, resp);
+          });
+      }
+
+      if(next_action == "news_service"){
+				getNewsFeeds(response, function(err, response){
+					return cb(err, response);
+				});
+			}
+
+      if(next_action && next_action == "weather_service"){
+				getWeather(response, function(err, response){
+					cb(err, response);
+				});
+			}
+
+  }else{
+    if(!response.output.text){
+      response.output.text = [];
+    }else{
+      response.output.text.push(responseText);
+    }
+    return cb(null, response);
+  }
+  // return cb(null, response);
 }
+
+function searchGoogle(response, cb) {
+	    console.log('Doing Google Search ');
+	    var params = {"keyword": response.input.text};
+	    searchHandler.searchGoogle(params, function(err, results){
+        if (err) {
+	            cb(err, null);
+	        }else{
+	        	if(results && results.length > 0){
+	        		response.output = {
+		        			text: results
+		        	};
+	        	}else{
+	        		delete response.output["text"];
+	        		response.context.next_action == "DO_NOTHING";
+	        	}
+	            cb(null, response);
+	        }
+	    });
+	};
+
+  function getNewsFeeds(response, cb) {
+	    console.log('fetching News Feeds');
+	    var params = {"feedURL": "http://feeds.feedburner.com/ndtvnews-latest"};
+	    feedsHandler.fetchFeedsData(params, function(err, feedsResp){
+	    	if (err) {
+	            cb(err, null);
+	        }else{
+	        	console.log("Feeds Response: >>> ", feedsResp);
+	        	if(feedsResp && feedsResp.length > 0){
+	        		response.output = {
+		        			text: feedsResp
+		        	};
+	        	}else{
+	        		delete response.output["text"];
+	        		response.context.next_action == "DO_NOTHING";
+	        	}
+	            cb(null, response);
+	        }
+	    });
+	};
+
+  function getWeather(response, cb) {
+	    console.log('fetching weather');
+	    var url =  "https://query.yahooapis.com/v1/public/yql?q=select item.condition from weather.forecast where woeid in (select woeid from geo.places(1) where text='New Delhi, IN')&format=json";
+	    request({
+	        url: url,
+	        json: true
+	    }, function (err, resp, body) {
+	        if (err) {
+	            cb(err, null);
+	        }
+	        if (resp.statusCode != 200) {
+	           cb(new Error(format("Unexpected status code %s from %s\n%s", resp.statusCode, url, body)), null);
+	        }
+	        try {
+	        	var weather = body.query.results.channel.item.condition;
+	        	var temperature = Number((weather.temp - 32) * 5/9).toFixed(2);
+	        	var respText = format('The current weather conditions are %s degrees and %s.', temperature, weather.text);
+	        	response.output = {
+	        			text: [respText]
+	        	};
+	        	console.log(respText);
+	            cb(null, response);
+	        } catch(ex) {
+	            ex.message = format("Unexpected response format from %s - %s", url, ex.message);
+	            cb(ex, null);
+	        }
+	    });
+	};
 
 module.exports = app;

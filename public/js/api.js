@@ -43,9 +43,11 @@ var Api = (function() {
     http.open('POST', messageEndpoint, true);
     http.setRequestHeader('Content-type', 'application/json');
     http.onreadystatechange = function() {
-      if (http.readyState === 4 && http.status === 200 && http.responseText) {
-        Api.setResponsePayload(http.responseText);
-      }
+      console.log("httpResponse: >> ", http.responseText, ", http.readyState: ", http.readyState);
+      // Api.setResponsePayload(http.responseText);
+       if (http.readyState === 4 && http.status === 200 && http.responseText) {
+         Api.setResponsePayload(http.responseText);
+       }
     };
 
     var params = JSON.stringify(payloadToWatson);
@@ -58,4 +60,5 @@ var Api = (function() {
     // Send request
     http.send(params);
   }
+
 }());

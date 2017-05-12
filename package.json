@@ -22,7 +22,9 @@
     "body-parser": "^1.15.2",
     "dotenv": "^2.0.0",
     "express": "^4.14.0",
-    "watson-developer-cloud": "^2.8.1"
+    "watson-developer-cloud": "^2.8.1",
+    "google": "^2.1.0",
+    "feedparser": "latest"
   },
   "devDependencies": {
     "babel-eslint": "^6.0.4",
