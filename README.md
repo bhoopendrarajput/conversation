@@ -22,7 +22,7 @@ If you want to modify the app or use it as a basis for building your own app, in
 
 ### Getting the files
 
-Use GitHub to clone the repository locally, or [download the .zip file](https://github.com/watson-developer-cloud/conversation-simple/archive/master.zip) of the repository and extract the files.
+Use GitHub to clone the repository locally, or [download the .zip file](https://github.com/sinny777/conversation/archive/master.zip) of the repository and extract the files.
 
 ### Setting up the Conversation service
 
