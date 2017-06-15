@@ -21,6 +21,7 @@ var bodyParser = require('body-parser'); // parser for post requests
 var Conversation = require('watson-developer-cloud/conversation/v1'); // watson sdk
 var request = require('request');
 var format = require('util').format;
+var moment = require('moment');
 var feedsHandler = require('./handlers/feedsHandler')();
 var searchHandler = require('./handlers/searchHandler')();
 
@@ -113,9 +114,19 @@ function updateMessage(response, cb) {
 
       if(next_action && next_action == "weather_service"){
 				getWeather(response, function(err, response){
-					cb(err, response);
+					return cb(err, response);
 				});
 			}
+
+      if(next_action && next_action == "date_time"){
+				handleDateNTimeAction(response, function(err, response){
+					return cb(err, response);
+				});
+			}
+
+      if(next_action && next_action == "continue"){
+        cb(null, response);
+      }
 
   }else{
     if(!response.output.text){
@@ -170,8 +181,13 @@ function searchGoogle(response, cb) {
 	};
 
   function getWeather(response, cb) {
-	    console.log('fetching weather');
-	    var url =  "https://query.yahooapis.com/v1/public/yql?q=select item.condition from weather.forecast where woeid in (select woeid from geo.places(1) where text='New Delhi, IN')&format=json";
+      if(!response.context && !response.context.location){
+        cb(new Error("Please provide the location "), null);
+        return false;
+      }
+	    console.log('fetching weather for : >>> ', response.context.location);
+
+	    var url =  "https://query.yahooapis.com/v1/public/yql?q=select item.condition from weather.forecast where woeid in (select woeid from geo.places(1) where text='"+response.context.location+"')&format=json";
 	    request({
 	        url: url,
 	        json: true
@@ -197,5 +213,46 @@ function searchGoogle(response, cb) {
 	        }
 	    });
 	};
+
+  function handleDateNTimeAction(response, cb){
+    console.log('Handling DateTime: >> ', response.context);
+	    if(response.context.show){
+	    		if(response.context.show.length > 1){
+	    			var dateTimeResp = "It's "+moment().format("LLLL");
+		    		console.log("Output: ", dateTimeResp);
+		    		response.output = {
+		        			text: [dateTimeResp]
+		        	};
+	    		}
+
+	    		if(response.context.show.length == 1){
+	    			if(response.context.show[0] == "date"){
+	    				var dateTimeResp = "It's "+moment().format("LL");
+			    		console.log("Output: ", dateTimeResp);
+			    		response.output = {
+			        			text: [dateTimeResp]
+			        	};
+	    			}
+	    			if(response.context.show[0] == "time"){
+	    				var dateTimeResp = "It's "+moment().format("LT");
+			    		console.log("Output: ", dateTimeResp);
+			    		response.output = {
+			        			text: [dateTimeResp]
+			        	};
+	    			}
+	    			if(response.context.show[0] == "day"){
+	    				var dateTimeResp = "It's "+moment().format("dddd");
+			    		console.log("Output: ", dateTimeResp);
+			    		response.output = {
+			        			text: [dateTimeResp]
+			        	};
+	    			}
+	    		}
+
+
+	    }
+
+	    cb(null, response);
+  }
 
 module.exports = app;
