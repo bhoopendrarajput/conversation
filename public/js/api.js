@@ -34,8 +34,13 @@ var Api = (function() {
         text: text
       };
     }
+
     if (context) {
       payloadToWatson.context = context;
+    }else{
+      payloadToWatson.context = {
+        "conversation_start": "true"
+      }
     }
 
     // Built http request
@@ -43,7 +48,7 @@ var Api = (function() {
     http.open('POST', messageEndpoint, true);
     http.setRequestHeader('Content-type', 'application/json');
     http.onreadystatechange = function() {
-      console.log("httpResponse: >> ", http.responseText, ", http.readyState: ", http.readyState);
+      // console.log("httpResponse: >> ", http.responseText, ", http.readyState: ", http.readyState);
       // Api.setResponsePayload(http.responseText);
        if (http.readyState === 4 && http.status === 200 && http.responseText) {
          Api.setResponsePayload(http.responseText);

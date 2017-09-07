@@ -54,6 +54,8 @@ You can use an exisiting instance of the Conversation service. Otherwise, follow
 1. Click the **Import workspace** icon in the Conversation service tool. Specify the location of the workspace JSON file in your local copy of the app project:
 
     `<project_root>/training/car_workspace.json`
+      OR
+    `<project_root>/training/home_automation_workspace.json`
 
 1. Select **Everything (Intents, Entities, and Dialog)** and then click **Import**. The car dashboard workspace is created.
 
@@ -116,7 +118,7 @@ You can use an exisiting instance of the Conversation service. Otherwise, follow
 
 1. Point your browser to http://localhost:3000 to try out the app.
 
-## Testing the app
+## Testing the app (car_workspace)
 
 After your app is installed and running, experiment with it to see how it responds.
 
@@ -137,6 +139,25 @@ The chat interface is on the left, and the JSON that the JavaScript code receive
 Type a request, such as `music on` or `I want to turn on the windshield wipers`. The system understands your intent and responds. You can see the details of how your input was understood by examining the JSON data in the `Watson understands` section on the right side.
 
 For example, if you type `Turn on some music`, the JSON data shows that the system understood the `turn_on` intent with a high level of confidence, along with the `appliance` entity with a value of `music`.
+
+## Testing the app (home_automation_workspace)
+
+This workspace is a demo for home automation tasks that a user can perform and in addition it also has integration with external APIs like Weather API, Google Search API, Fetching News Feed and a modules like telling Date and time information to the user.  After your app is installed and running, experiment with it to see how it responds.
+
+The chat interface is on the left, and the JSON that the JavaScript code receives from the Conversation service is on the right. You can test this by typing following queries:
+
+    Turn on the living room light
+    Switch off the kitchen tubelight
+    Turn on my bedroom fan
+    How is the weather in London
+    Can you tell me the latest news
+    Tell me something about you
+    How old are you ?
+    Tell me a joke
+    Who created you ?
+    What is the meaning of ROFL ?
+    What is the date and time ?
+    What's the time now ?
 
 For more information about intents, see the [Conversation service documentation][doc_intents].
 

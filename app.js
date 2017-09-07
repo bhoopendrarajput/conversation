@@ -25,22 +25,25 @@ var moment = require('moment');
 var feedsHandler = require('./handlers/feedsHandler')();
 var searchHandler = require('./handlers/searchHandler')();
 
-var app = express();
-
-// Bootstrap application settings
-app.use(express.static('./public')); // load UI from public folder
-app.use(bodyParser.json());
-
-// Create the service wrapper
-var conversation = new Conversation({
+var watson = require('watson-developer-cloud');
+var credentials = {
   // If unspecified here, the CONVERSATION_USERNAME and CONVERSATION_PASSWORD env properties will be checked
   // After that, the SDK will fall back to the bluemix-provided VCAP_SERVICES environment property
   // username: '<username>',
   // password: '<password>',
   url: 'https://gateway.watsonplatform.net/conversation/api',
-  version_date: '2016-10-21',
+  version_date: '2017-05-26',
   version: 'v1'
-});
+};
+
+// console.log("Credentials: >>> ", JSON.stringify(credentials));
+var conversation = watson.conversation(credentials);
+
+var app = express();
+
+// Bootstrap application settings
+app.use(express.static('./public')); // load UI from public folder
+app.use(bodyParser.json());
 
 // Endpoint to be call from the client side
 app.post('/api/message', function(req, res, next) {
@@ -125,7 +128,9 @@ function updateMessage(response, cb) {
 			}
 
       if(next_action && next_action == "continue"){
-        cb(null, response);
+        return cb(null, response);
+      }else{
+        return cb(null, response);
       }
 
   }else{
