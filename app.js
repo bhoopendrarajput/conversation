@@ -130,7 +130,7 @@ function updateMessage(response, cb) {
       if(next_action && next_action == "continue"){
         return cb(null, response);
       }else{
-        return cb(null, response);
+        // return cb(null, response);
       }
 
   }else{
