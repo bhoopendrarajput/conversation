@@ -1,109 +1,60 @@
-# Conversation Sample Application
+# IBM Watson Conversation with Discovery Service
 
-This Node.js app demonstrates the Conversation service in a simple chat interface simulating a cognitive car dashboard.
 
-![Demo](readme_images/demo.gif)
+This application shows the capabilities of Watson [Conversation](https://console.bluemix.net/docs/services/conversation/index.html#about) and [Discovery](https://console.bluemix.net/docs/services/discovery/index.html) services to work together to find answers on a given query. In this sample app, the user is chatting with a virtual car dashboard, giving it commands in plain English such as "Turn on the wipers," "Play me some music," or "Let's find some food." If the user makes a request and Conversation is not confident in its answer (e.g. "How do I check my tire pressure?"), Discovery will search the car manual and return the most relevant results, if relevant materials exist.
 
-You can view a [demo][demo_url] of this app.
+## Table of Contents
+* [How it Works](#how-it-works)
+* [Run Locally](#run-locally)
+  * [Getting Started](#getting-started)
+  * [Setting up Watson Services](#setting-up-watson-services)
+  * [Train Watson Services](#train-watson-services)
+  * [Running the App](#running-the-app)
+* [License](#license)
 
-## Before you begin
+## How it Works
 
-* Create a Bluemix account
-    * [Sign up](https://console.ng.bluemix.net/registration/?target=/catalog/%3fcategory=watson) in Bluemix, or use an existing account. Your account must have available space for at least 1 app and 1 service.
-* Make sure that you have the following prerequisites installed:
-    * The [Node.js](https://nodejs.org/#download) runtime, including the [npm][npm_link] package manager
-    * The [Cloud Foundry][cloud_foundry] command-line client
+![Flow diagram](README_pictures/Flow_diagram.png?raw=true)
 
-      Note: Ensure that you Cloud Foundry version is up to date
+Under the hood, there are two components to this app:
+* One is the front-end, which is simply static assets (HTML, CSS etc.)
+* The other is the nodejs based server side logic:
+  * When the user inputs text, the UI sends the current context and input to the server. These are processed by the Conversation service and returned, with an output and new context. The results are sent to the next action.
+  * The Discovery action checks for a flag from the Conversation output, and if it is present takes the original input and queries the manual with it. If there is no flag, the Conversation results pass through the function unchanged. The Server returns the output and updated context back to the UI.
 
-## Installing locally
 
-If you want to modify the app or use it as a basis for building your own app, install it locally. You can then deploy your modified version of the app to the Bluemix cloud.
+## Run Locally
 
-### Getting the files
+### Getting Started
+1. If you don't already have an IBM Cloud account, you can sign up [here](https://console.bluemix.net/?cm_mmc=GitHubReadMe)
+> Make sure you have at least 2 services available in your IBM Cloud account.
 
-Use GitHub to clone the repository locally, or [download the .zip file](https://github.com/sinny777/conversation/archive/master.zip) of the repository and extract the files.
+2. Clone (or fork) this repository, and go to the new directory
+```bash
+git clone https://github.com/sinny777/conversation.git
+cd conversation
+```
 
-### Setting up the Conversation service
+3. Install [Node.js](https://nodejs.org) (Versions >= 6).
 
-You can use an exisiting instance of the Conversation service. Otherwise, follow these steps.
+4. In the root directory of your repository, install the project dependencies.
+```bash
+npm install
+```
 
-1. At the command line, go to the local project directory (`conversation-simple`).
+### Setting up Watson Services
 
-1. Connect to Bluemix with the Cloud Foundry command-line tool. For more information, see the Watson Developer Cloud [documentation][cf_docs].
-    ```bash
-    cf login
-    ```
+1. [Create  a project](https://console.bluemix.net/developer/watson/create-project?services=conversation%2Cdiscovery) using the Watson Console using Conversation and Discovery services.
 
-1. Create an instance of the Conversation service in Bluemix. For example:
+2. In the Watson Console navigate to [Projects](https://console.bluemix.net/developer/watson/projects), click your newly created project, copy credentials from Project View page and paste them in to a new `credentials.json` file.
 
-    ```bash
-    cf create-service conversation free my-conversation-service
-    ```
+### Train Watson Services
+Run following commands to train Conversation and Discovery services:
+``` bash
+  npm run train
+```
 
-### Importing the Conversation workspace
-
-1. In your browser, navigate to [your Bluemix console] (https://console.ng.bluemix.net/dashboard/services).
-
-1. From the **All Items** tab, click the newly created Conversation service in the **Services** list.
-
-    ![Screen capture of Services list](readme_images/conversation_service.png)
-
-1. On the Service Details page, click **Launch tool**.
-
-1. Click the **Import workspace** icon in the Conversation service tool. Specify the location of the workspace JSON file in your local copy of the app project:
-
-    `<project_root>/training/car_workspace.json`
-      OR
-    `<project_root>/training/home_automation_workspace.json`
-
-1. Select **Everything (Intents, Entities, and Dialog)** and then click **Import**. The car dashboard workspace is created.
-
-### Configuring the app environment
-
-1. Copy or rename the `.env.example` file to `.env` (nothing before the dot).
-
-1. Create a service key in the format `cf create-service-key <service_instance> <service_key>`. For example:
-
-    ```bash
-    cf create-service-key my-conversation-service myKey
-    ```
-
-1. Retrieve the credentials from the service key using the command `cf service-key <service_instance> <service_key>`. For example:
-
-    ```bash
-    cf service-key my-conversation-service myKey
-    ```
-
-   The output from this command is a JSON object, as in this example:
-
-    ```JSON
-    {
-      "password": "87iT7aqpvU7l",
-      "url": "https://gateway.watsonplatform.net/conversation/api",
-      "username": "ca2905e6-7b5d-4408-9192-e4d54d83e604"
-    }
-    ```
-
-1. Paste  the `password` and `username` values (without quotation marks) from the JSON into the `CONVERSATION_PASSWORD` and `CONVERSATION_USERNAME` variables in the `.env` file. For example:
-
-    ```
-    CONVERSATION_USERNAME=ca2905e6-7b5d-4408-9192-e4d54d83e604
-    CONVERSATION_PASSWORD=87iT7aqpvU7l
-    ```
-
-1. In your Bluemix console, open the Conversation service instance where you imported the workspace.
-
-1. Click the menu icon in the upper-right corner of the workspace tile, and then select **View details**.
-
-    ![Screen capture of workspace tile menu](readme_images/workspace_details.png)
-
-1. Click the ![Copy](readme_images/copy_icon.png) icon to copy the workspace ID to the clipboard.
-
-1. On the local system, paste the workspace ID into the WORKSPACE_ID variable in the `.env` file. Save and close the file.
-
-### Installing and starting the app
-
+### Running the App
 1. Install the demo app package into the local Node.js runtime environment:
 
     ```bash
@@ -118,7 +69,7 @@ You can use an exisiting instance of the Conversation service. Otherwise, follow
 
 1. Point your browser to http://localhost:3000 to try out the app.
 
-## Testing the app (car_workspace)
+## Testing the app
 
 After your app is installed and running, experiment with it to see how it responds.
 
@@ -140,99 +91,22 @@ Type a request, such as `music on` or `I want to turn on the windshield wipers`.
 
 For example, if you type `Turn on some music`, the JSON data shows that the system understood the `turn_on` intent with a high level of confidence, along with the `appliance` entity with a value of `music`.
 
-## Testing the app (home_automation_workspace)
+In addition to conversational commands, you can also ask questions that you would expect to have answered in your car manual. For example:
 
-This workspace is a demo for home automation tasks that a user can perform and in addition it also has integration with external APIs like Weather API, Google Search API, Fetching News Feed and a modules like telling Date and time information to the user.  After your app is installed and running, experiment with it to see how it responds.
-
-The chat interface is on the left, and the JSON that the JavaScript code receives from the Conversation service is on the right. You can test this by typing following queries:
-
-    Turn on the living room light
-    Switch off the kitchen tubelight
-    Turn on my bedroom fan
-    How is the weather in London
-    Can you tell me the latest news
-    Tell me something about you
-    How old are you ?
-    Tell me a joke
-    Who created you ?
-    What is the meaning of ROFL ?
-    What is the date and time ?
-    What's the time now ?
-
-For more information about intents, see the [Conversation service documentation][doc_intents].
-
-To see details of how these intents are defined, including sample input for each intent, launch the Conversation tool.
-
-## Modifying the app
-
-After you have the app deployed and running, you can explore the source files and make changes. Try the following:
-
-* Modify the .js files to change the app logic.
-* Modify the .html file to change the appearance of the app page.
-* Use the Conversation tool to train the service for new intents, or to modify the dialog flow. For more information, see the [Conversation service documentation][docs_landing].
-
-## Deploying to Bluemix
-
-You can use Cloud Foundry to deploy your local version of the app to Bluemix.
-
-1. In the project root directory, open the `manifest.yml` file:
-
-  * In the `applications` section of the `manifest.yml` file, change the `name` value to a unique name for your version of the demo app.
-  * In the `services` section, specify the name of the Conversation service instance you created for the demo app. If you do not remember the service name, use the `cf services` command to list all services you have created.
-
-  The following example shows a modified `manifest.yml` file:
-
-  ```yml
-  ---
-  declared-services:
-   conversation-service:
-     label: conversation
-     plan: free
-  applications:
-  - name: conversation-simple-app-test1
-   command: npm start
-   path: .
-   memory: 256M
-   instances: 1
-   services:
-   - my-conversation-service
-   env:
-     NPM_CONFIG_PRODUCTION: false
-  ```
-
-1. Push the app to Bluemix:
-
-  ```bash
-  cf push
-  ```
-  Access your app on Bluemix at the URL specified in the command output.
-
-## Troubleshooting
-
-If you encounter a problem, you can check the logs for more information. To see the logs, run the `cf logs` command:
-
-```none
-cf logs <application-name> --recent
-```
+    How do I check my tire pressure
+    How do I turn on cruise control
+    How do I improve fuel efficiency
+    How do I connect my phone to bluetooth
 
 ## License
 
 This sample code is licensed under Apache 2.0.
 Full license text is available in [LICENSE](LICENSE).
 
-## Contributing
-
-See [CONTRIBUTING](CONTRIBUTING.md).
-
-## Open Source @ IBM
-
-Find more open source projects on the
-[IBM Github Page](http://ibm.github.io/).
-
+## Reference
 
 [cf_docs]: (https://www.ibm.com/watson/developercloud/doc/common/getting-started-cf.html)
 [cloud_foundry]: https://github.com/cloudfoundry/cli#downloads
-[demo_url]: http://conversation-simple.mybluemix.net/
 [doc_intents]: (http://www.ibm.com/watson/developercloud/doc/conversation/intent_ovw.shtml)
 [docs]: http://www.ibm.com/watson/developercloud/doc/conversation/overview.shtml
 [docs_landing]: (http://www.ibm.com/watson/developercloud/doc/conversation/index.shtml)

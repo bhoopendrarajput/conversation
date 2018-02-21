@@ -17,7 +17,10 @@
 
 'use strict';
 
+const fs = require('fs');
 require('dotenv').config({silent: true});
+
+process.env.VCAP_SERVICES = process.env.VCAP_SERVICES || fs.readFileSync('./credentials.json', 'utf-8');
 
 var server = require('./app');
 var port = process.env.PORT || process.env.VCAP_APP_PORT || 3000;
