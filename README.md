@@ -14,8 +14,6 @@ This application shows the capabilities of Watson [Conversation](https://console
 
 ## How it Works
 
-![Flow diagram](README_pictures/Flow_diagram.png?raw=true)
-
 Under the hood, there are two components to this app:
 * One is the front-end, which is simply static assets (HTML, CSS etc.)
 * The other is the nodejs based server side logic:
