@@ -29,7 +29,7 @@ var methods = {};
         context: params.context || {},
         input: params.input || {}
       };
-
+			// console.log("Calling Watson Conversation with payload: >> ", payload);
       conversation.message(payload, function(err, conversationResp) {
         if (err) {
           return reject(err);
@@ -45,6 +45,7 @@ var methods = {};
           // updateMessage(conversationResp, function(err, resp){
           //     return resolve(response);
           // });
+					// console.log("Conversation Response: >>> ", conversationResp);
           let returnJson = conversationResp;
           delete returnJson.environment_id;
           delete returnJson.collection_id;

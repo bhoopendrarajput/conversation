@@ -159,34 +159,102 @@ var ConversationPanel = (function() {
     if (Object.prototype.toString.call( textArray ) !== '[object Array]') {
       textArray = [textArray];
     }
+
     var messageArray = [];
 
-    textArray.forEach(function(currentText) {
-      console.log("DIALOG MSG: >> ", currentText);
-      if (currentText) {
-        var messageJson = {
-          // <div class='segments'>
-          'tagName': 'div',
-          'classNames': ['segments'],
-          'children': [{
-            // <div class='from-user/from-watson latest'>
-            'tagName': 'div',
-            'classNames': [(isUser ? 'from-user' : 'from-watson'), 'latest', ((messageArray.length === 0) ? 'top' : 'sub')],
-            'children': [{
-              // <div class='message-inner'>
+     if(newPayload.output && newPayload.output.discoveryResults) {
+         console.log(newPayload.output.discoveryResults);
+
+         var watsonMsg = {
+           'tagName': 'div',
+           'classNames': ['segments'],
+           'children': [{
+             'tagName': 'div',
+             'classNames': ['from-watson', 'latest', 'top'],
+             'children': [{
+               'tagName': 'div',
+               'classNames': ['message-inner'],
+               'children': [{
+                 'tagName': 'p',
+                 'text': 'Here\'s what I found from Discovery \n\n'
+               }]
+             }]
+           }]
+         };
+         messageArray.push(Common.buildDomElement(watsonMsg));
+
+         for(let discoveryOutput of newPayload.output.discoveryResults){
+            var messageJson = {
+              // <div className="result">
               'tagName': 'div',
-              'classNames': ['message-inner'],
-              'children': [{
-                // <p>{messageText}</p>
-                'tagName': 'p',
-                'text': currentText
-              }]
-            }]
-          }]
-        };
-        messageArray.push(Common.buildDomElement(messageJson));
-      }
-    });
+              'classNames': ['result'],
+              'children': [
+                {
+                  // <div className="result-title">{props.title}</div>
+                  'tagName': 'div',
+                  'classNames': ['result-title'],
+                  'children': [{
+                    'tagName': 'p',
+                    'text': discoveryOutput.title
+                  }]
+                },
+                {
+                  // <div className="result-preview">{props.preview}</div>
+                  'tagName': 'div',
+                  'classNames': ['result-preview'],
+                  'children': [{
+                    'tagName': 'p',
+                    'text': discoveryOutput.bodySnippet
+                  }]
+                },
+                {
+                  // <div className="result-link"><a href={props.link} target="_blank">{props.linkText}</a></div>
+                  'tagName': 'div',
+                  'classNames': ['result-link'],
+                  'children': [{
+                                'tagName': 'a',
+                                "attributes": [
+                                                {'name': 'href', 'value': discoveryOutput.sourceUrl},
+                                                {'name': 'target', 'value': '_blank'}
+                                              ],
+                                'text': 'More details..'
+
+                              }]
+                },
+
+            ]
+            };
+            messageArray.push(Common.buildDomElement(messageJson));
+
+         }
+     }else{
+       textArray.forEach(function(currentText) {
+         console.log("DIALOG MSG: >> ", currentText);
+         if (currentText) {
+           var messageJson = {
+             // <div class='segments'>
+             'tagName': 'div',
+             'classNames': ['segments'],
+             'children': [{
+               // <div class='from-user/from-watson latest'>
+               'tagName': 'div',
+               'classNames': [(isUser ? 'from-user' : 'from-watson'), 'latest', ((messageArray.length === 0) ? 'top' : 'sub')],
+               'children': [{
+                 // <div class='message-inner'>
+                 'tagName': 'div',
+                 'classNames': ['message-inner'],
+                 'children': [{
+                   // <p>{messageText}</p>
+                   'tagName': 'p',
+                   'text': currentText
+                 }]
+               }]
+             }]
+           };
+           messageArray.push(Common.buildDomElement(messageJson));
+         }
+       });
+     }
 
     return messageArray;
   }
