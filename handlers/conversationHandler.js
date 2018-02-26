@@ -1,5 +1,7 @@
 'use strict'
 
+var request = require('request'),
+		format = require('format');
 const assert = require('assert');
 const feedsHandler = require('./feedsHandler')();
 const searchHandler = require('./searchHandler')();
@@ -18,6 +20,8 @@ var methods = {};
       assert(params, 'params cannot be null');
       assert(params.input, 'params.input cannot be null');
       assert(params.context, 'params.context cannot be null');
+
+			params.context.next_action = null;
 
       const workspaceId = process.env.WORKSPACE_ID || '<workspace-id>';
       if (!workspaceId || workspaceId === '<workspace-id>') {
@@ -51,7 +55,11 @@ var methods = {};
           delete returnJson.collection_id;
           delete returnJson.username;
           delete returnJson.password;
-          return resolve(conversationResp);
+
+					updateMessage(conversationResp, function(error, updatedResp){
+							return resolve(updatedResp);
+					});
+
         }
       });
     });
